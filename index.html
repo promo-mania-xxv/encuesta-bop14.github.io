@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta de Salud Juvenil</title>
+    <!-- SDK de EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --border-radius: 10px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            line-height: 1.6;
+        }
+
+        .survey-container, .intro-container {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            padding: 20px;
+            position: relative;
+        }
+
+        .intro-container {
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .intro-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .intro-title {
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+        }
+
+        .intro-text {
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+
+        .start-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .start-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .progress-tracker {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            position: absolute;
+            height: 100%;
+            width: 0;
+            background: var(--primary-color);
+            border-radius: 3px;
+            transition: var(--transition);
+            left: 0;
+            top: 0;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #adb5bd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+
+        .step.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .survey-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .survey-section.active {
+            display: block;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .question {
+            margin-bottom: 20px;
+        }
+
+        .question p {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--dark-color);
+            font-weight: 500;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .options label {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .options label:hover {
+            background: #e9ecef;
+        }
+
+        .options input[type="radio"] {
+            margin-right: 10px;
+            accent-color: var(--primary-color);
+        }
+
+        .other-input {
+            margin-left: 10px;
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            flex-grow: 1;
+            transition: var(--transition);
+            display: none;
+        }
+
+        .other-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 100px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .prev-btn {
+            background: #e9ecef;
+            color: var(--dark-color);
+        }
+
+        .prev-btn:hover:not(:disabled) {
+            background: #dee2e6;
+        }
+
+        .next-btn, .submit-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .next-btn:hover, .submit-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .completion-message {
+            text-align: center;
+            padding: 20px 10px;
+            display: none;
+        }
+
+        .checkmark {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--success-color);
+            color: white;
+            font-size: 2.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            animation: bounceIn 0.6s ease;
+        }
+
+        .completion-message h2 {
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .completion-message h2::after {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .completion-message p {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .restart-btn {
+            background: var(--accent-color);
+            color: white;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .restart-btn:hover {
+            background: #3a86ff;
+        }
+
+        /* Estilo para el mensaje de estado */
+        .status-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 480px) {
+            .survey-container, .intro-container {
+                padding: 15px;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .step {
+                width: 24px;
+                height: 24px;
+                font-size: 0.7rem;
+            }
+            
+            button {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de introducción -->
+    <div class="intro-container">
+        <div class="intro-icon">❤️</div>
+        <h1 class="intro-title">Encuesta de Salud y Bienestar Juvenil</h1>
+        <p class="intro-text">Tu salud y bienestar son importantes. Esta encuesta nos ayudará a entender mejor las preocupaciones juveniles y crear programas más efectivos de apoyo y prevención.</p>
+        <p class="intro-text">Tus respuestas son completamente confidenciales y nos ayudarán a promover un entorno más saludable para todos.</p>
+        <button type="button" class="start-btn">Comenzar Encuesta</button>
+    </div>
+
+    <!-- Contenedor principal de la encuesta -->
+    <div class="survey-container" style="display:none;">
+        <div class="progress-tracker">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-steps">
+                <span class="step active">1</span>
+                <span class="step">2</span>
+                <span class="step">3</span>
+                <span class="step">4</span>
+                <span class="step">5</span>
+            </div>
+        </div>
+
+        <form id="youthSurvey">
+            <!-- Sección 1: Bullying -->
+            <div class="survey-section active">
+                <h2>Bullying</h2>
+                <div class="question">
+                    <p>1. ¿Has presenciado o experimentado situaciones de bullying?</p>
+                    <div class="options">
+                        <label><input type="radio" name="bullying_exp" value="si" required> Sí</label>
+                        <label><input type="radio" name="bullying_exp" value="no"> No</label>
+                        <label><input type="radio" name="bullying_exp" value="prefiero-no-contestar"> Prefiero no contestar</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p>2. ¿Qué tipo de bullying consideras más frecuente?</p>
+                    <div class="options">
+                        <label><input type="radio" name="bullying_type" value="verbal" required> Verbal</label>
+                        <label><input type="radio" name="bullying_type" value="social"> Social (exclusión)</label>
+                        <label><input type="radio" name="bullying_type" value="fisico"> Físico</label>
+                        <label><input type="radio" name="bullying_type" value="ciberbullying"> Ciberbullying</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p>3. ¿Qué acciones crees que serían efectivas para prevenirlo?</p>
+                    <textarea name="bullying_solution" placeholder="Tus ideas..." required></textarea>
+                </div>
+            </div>
+
+            <!-- Sección 2: Atención -->
+            <div class="survey-section">
+                <h2>Enfoque y Atención</h2>
+                <div class="question">
+                    <p>1. ¿Qué actividades te llaman más la atención?</p>
+                    <div class="options">
+                        <label><input type="radio" name="attention_activities" value="estudiar" required> Estudiar</label>
+                        <label><input type="radio" name="attention_activities" value="leer"> Leer</label>
+                        <label><input type="radio" name="attention_activities" value="celular"> Usar el celular</label>
+                        <label><input type="radio" name="attention_activities" value="otros"> Otros <input type="text" class="other-input" name="attention_activities_other"></label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p>2. ¿Qué afecta más tu concentración?</p>
+                    <div class="options">
+                        <label><input type="radio" name="concentration_issues" value="sueño" required> Falta de sueño</label>
+                        <label><input type="radio" name="concentration_issues" value="celular"> Uso del celular</label>
+                        <label><input type="radio" name="concentration_issues" value="estres"> Estrés</label>
+                        <label><input type="radio" name="concentration_issues" value="otros"> Otros <input type="text" class="other-input" name="concentration_issues_other"></label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p>3. ¿Qué haces en tu tiempo libre?</p>
+                    <textarea name="free_time" placeholder="Describe tus actividades..." required></textarea>
+                </div>
+            </div>
+
+            <!-- Sección 3: Vida Adulta -->
+            <div class="survey-section">
+                <h2>Transición a la Vida Adulta</h2>
+                <div class="question">
+                    <p>1. ¿Qué aspecto de la vida adulta te genera más inquietud?</p>
+                    <div class="options">
+                        <label><input type="radio" name="adult_worries" value="finanzas" required> Responsabilidades financieras</label>
+                        <label><input type="radio" name="adult_worries" value="independencia"> Independencia</label>
+                        <label><input type="radio" name="adult_worries" value="carrera"> Desarrollo profesional</label>
+                        <label><input type="radio" name="adult_worries" value="relaciones"> Relaciones personales</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p>2. ¿Cómo te preparas para esta etapa?</p>
+                    <div class="options">
+                        <label><input type="radio" name="adult_preparation" value="estudios" required> Con estudios</label>
+                        <label><input type="radio" name="adult_preparation" value="trabajo"> Adquiriendo experiencia laboral</label>
+                        <label><input type="radio" name="adult_preparation" value="habilidades"> Desarrollando habilidades</label>
+                        <label><input type="radio" name="adult_preparation" value="no-preparado"> No me siento preparado</label>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p>3. ¿Qué consejo te gustaría recibir sobre este tema?</p>
+                    <textarea name="adult_advice" placeholder="Qué necesitas saber..." required></textarea>
+                </div>
+            </div>
+
+            <!-- Sección 4: Salud Mental -->
+            <div class="survey-section">
+                <h2>Salud Mental</h2>
+                <div class="question">
+                    <p>1. ¿Con qué frecuencia te sientes estresado/a?</p>
+                    <div class="options">
+                        <label><input type="radio" name="stress_frequency" value="nunca" required> Casi nunca</label>
+                        <label><input type="radio" name="stress_frequency" value="ocasional"> Ocasionalmente</label>
+                        <label><input type="radio" name="stress_frequency" value="frecuente"> Frecuentemente</label>
+                        <label><input type="radio" name="stress_frequency" value="constante"> Constantemente</label>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <p>2. ¿Qué actividades realizas para cuidar tu salud mental?</p>
+                    <textarea name="mental_health_activities" placeholder="Tus estrategias..." required></textarea>
+                </div>
+                
+                <div class="question">
+                    <p>3. ¿Qué crees que le da sentido a tu vida?</p>
+                    <textarea name="life_meaning" placeholder="Tus pensamientos..." required></textarea>
+                </div>
+            </div>
+
+            <!-- Sección 5: Sugerencias -->
+            <div class="survey-section">
+                <h2>Tu Opinión Importa</h2>
+                <div class="question">
+                    <p>¿Qué otra problemática juvenil relacionada con la salud te gustaría que abordemos?</p>
+                    <textarea name="suggested_topics" placeholder="Tus sugerencias..." required></textarea>
+                </div>
+            </div>
+
+            <!-- Controles de Navegación -->
+            <div class="navigation-buttons">
+                <button type="button" class="prev-btn" disabled>Anterior</button>
+                <button type="button" class="next-btn">Siguiente</button>
+                <button type="submit" class="submit-btn" style="display:none;">Enviar</button>
+            </div>
+        </form>
+
+        <!-- Mensaje de Confirmación -->
+        <div class="completion-message">
+            <div class="checkmark">✓</div>
+            <h2>¡Gracias por participar!</h2>
+            <p>Tus respuestas nos ayudarán a crear mejores programas de salud y bienestar para jóvenes.</p>
+            <button type="button" class="restart-btn">Realizar otra encuesta</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
